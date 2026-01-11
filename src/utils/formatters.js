@@ -11,7 +11,7 @@ export function formatFileSize(bytes) {
  * Format aspect ratio as a simple fraction
  */
 export function formatRatio(ratio) {
-  const tolerance = 0.01;
+  const tolerance = 0.001;
   const maxDenominator = 100;
   
   for (let denom = 1; denom <= maxDenominator; denom++) {

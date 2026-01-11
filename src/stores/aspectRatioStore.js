@@ -8,6 +8,7 @@ export const PRESET_RATIOS = [
   { label: '3:4 (Photo)', value: 3 / 4 },
   { label: '4:5 (Photo)', value: 4 / 5 },
   { label: '16:9 (Display)', value: 16 / 9 },
+  { label: '21:9 (Ultrawide)', value: 21 / 9 }
 ];
 
 export const useAspectRatioStore = defineStore('aspectRatio', () => {
@@ -50,16 +51,10 @@ export const useAspectRatioStore = defineStore('aspectRatio', () => {
     }
     
     // Add custom ratio
-    const label = `Custom ${formatRatio(ratioValue)}`;
+    const label = `${formatRatio(ratioValue)} (Custom)`;
     customRatios.value.push({ label, value: ratioValue });
     selectedRatios.value.push(ratioValue);
     customRatioInput.value = '';
-  }
-
-  function removeCustomRatio(index) {
-    const ratio = customRatios.value[index];
-    customRatios.value.splice(index, 1);
-    selectedRatios.value = selectedRatios.value.filter(r => !ratiosEqual(r, ratio.value));
   }
 
   function getRatioLabel(ratio) {
@@ -79,7 +74,6 @@ export const useAspectRatioStore = defineStore('aspectRatio', () => {
     customRatioError,
     toggleRatio,
     addCustomRatio,
-    removeCustomRatio,
     getRatioLabel
   };
 });

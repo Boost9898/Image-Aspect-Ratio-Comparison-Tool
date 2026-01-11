@@ -8,8 +8,9 @@ const aspectRatioStore = useAspectRatioStore();
   <div>
     <h2>Select aspect ratios</h2>
 
-    <!-- Preset Ratios -->
+    <!-- All Ratios (Preset + Custom) in one grid -->
     <div class="ratio-presets">
+      <!-- Preset Ratios -->
       <label
         v-for="preset in PRESET_RATIOS"
         :key="preset.label"
@@ -22,6 +23,21 @@ const aspectRatioStore = useAspectRatioStore();
           @change="aspectRatioStore.toggleRatio(preset.value)"
         />
         <span>{{ preset.label }}</span>
+      </label>
+
+      <!-- Custom Ratios (inline with presets) -->
+      <label
+        v-for="(ratio, index) in aspectRatioStore.customRatios"
+        :key="`custom-${index}`"
+        class="ratio-checkbox ratio-checkbox--custom"
+      >
+        <input
+          type="checkbox"
+          :value="ratio.value"
+          :checked="aspectRatioStore.selectedRatios.includes(ratio.value)"
+          @change="aspectRatioStore.toggleRatio(ratio.value)"
+        />
+        <span>{{ ratio.label }}</span>
       </label>
     </div>
 
@@ -44,26 +60,6 @@ const aspectRatioStore = useAspectRatioStore();
       </div>
       <div v-if="aspectRatioStore.customRatioError" class="error-message">
         {{ aspectRatioStore.customRatioError }}
-      </div>
-    </div>
-
-    <!-- Custom Ratios List -->
-    <div v-if="aspectRatioStore.customRatios.length > 0" class="custom-ratio-list">
-      <div
-        v-for="(ratio, index) in aspectRatioStore.customRatios"
-        :key="index"
-        class="custom-ratio-item"
-      >
-        <label class="ratio-checkbox">
-          <input
-            type="checkbox"
-            :value="ratio.value"
-            :checked="aspectRatioStore.selectedRatios.includes(ratio.value)"
-            @change="aspectRatioStore.toggleRatio(ratio.value)"
-          />
-          <span>{{ ratio.label }}</span>
-        </label>
-        <button @click="aspectRatioStore.removeCustomRatio(index)" class="remove-btn">×</button>
       </div>
     </div>
   </div>
@@ -101,6 +97,9 @@ h3 {
   transition: all 0.2s;
   background: white;
   text-align: center;
+  width: 100%;
+  max-width: 220px;
+  min-width: 160px;
 }
 
 .ratio-checkbox:hover {
@@ -122,6 +121,21 @@ h3 {
 .ratio-checkbox input:checked + span {
   font-weight: 600;
   color: #667eea;
+}
+
+/* Custom ratio specific styles */
+.ratio-checkbox--custom {
+  border-color: #cbd5e0;
+  background: #f7fafc;
+}
+
+.ratio-checkbox--custom:hover {
+  border-color: #667eea;
+  background: #edf2f7;
+}
+
+.custom-ratio {
+  margin-top: 1rem;
 }
 
 .custom-ratio__input {
@@ -169,44 +183,6 @@ h3 {
   padding: 0.75rem 1rem;
   border-radius: 6px;
   font-size: 0.9rem;
-}
-
-.custom-ratio-list {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.custom-ratio-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.custom-ratio-item .ratio-checkbox {
-  flex: 1;
-  margin: 0;
-}
-
-.remove-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #feb2b2;
-  color: #c53030;
-  border: none;
-  border-radius: 6px;
-  font-size: 1.5rem;
-  cursor: pointer;
-  transition: background 0.2s;
-  flex-shrink: 0;
-}
-
-.remove-btn:hover {
-  background: #fc8181;
 }
 
 @media (max-width: 768px) {
