@@ -48,7 +48,7 @@ const aspectRatioStore = useAspectRatioStore();
         <input
           type="text"
           v-model="aspectRatioStore.customRatioInput"
-          placeholder="e.g., 3:2"
+          placeholder="w:h; 2:3"
           @keyup.enter="aspectRatioStore.addCustomRatio"
         />
         <button 

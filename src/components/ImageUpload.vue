@@ -49,7 +49,7 @@ function loadFromUrl() {
         <input
           type="url"
           v-model="imageUrl"
-          placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
+          placeholder="Enter image URL (https://example.com/image.jpg)"
           @keyup.enter="loadFromUrl"
           :disabled="imageStore.isLoadingUrl"
         />

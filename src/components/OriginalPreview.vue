@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { usePreviewStore } from '../stores/previewStore.js';
+import { useAspectRatioStore } from '../stores/aspectRatioStore.js';
+import { formatRatio } from '../utils/formatters.js';
 
 const props = defineProps({
   imageUrl: {
@@ -22,10 +24,21 @@ const props = defineProps({
 });
 
 const previewStore = usePreviewStore();
+const aspectRatioStore = useAspectRatioStore();
 const previewContainer = ref(null);
 const imageElement = ref(null);
 const imageBounds = ref(null);
 const isDragging = ref(false);
+const showCropBoxes = ref(true);
+
+const cropBoxColors = [
+  { border: '#667eea', fill: 'rgba(102, 126, 234, 0.3)' },
+  { border: '#48bb78', fill: 'rgba(72, 187, 120, 0.3)' },
+  { border: '#ed8936', fill: 'rgba(237, 137, 54, 0.3)' },
+  { border: '#f56565', fill: 'rgba(245, 101, 101, 0.3)' },
+  { border: '#4299e1', fill: 'rgba(66, 153, 225, 0.3)' },
+  { border: '#9f7aea', fill: 'rgba(159, 122, 234, 0.3)' }
+];
 
 // Calculate the actual rendered image bounds within the container
 const calculateImageBounds = () => {
@@ -57,6 +70,50 @@ const focalIndicatorStyle = computed(() => {
     left: `${x}px`,
     top: `${y}px`
   };
+});
+
+const cropBoxes = computed(() => {
+  if (!showCropBoxes.value || !imageBounds.value) return [];
+
+  const ratios = aspectRatioStore.selectedRatios;
+  if (!ratios.length) return [];
+
+  const { left, top, width, height } = imageBounds.value;
+  const imageRatio = width / height;
+  const focalX = Math.min(100, Math.max(0, props.focalPoint.x));
+  const focalY = Math.min(100, Math.max(0, props.focalPoint.y));
+
+  return ratios.map((ratio, index) => {
+    let boxWidth;
+    let boxHeight;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (imageRatio > ratio) {
+      boxHeight = height;
+      boxWidth = height * ratio;
+      const maxOffset = width - boxWidth;
+      offsetX = (focalX / 100) * maxOffset;
+    } else {
+      boxWidth = width;
+      boxHeight = width / ratio;
+      const maxOffset = height - boxHeight;
+      offsetY = (focalY / 100) * maxOffset;
+    }
+
+    const colors = cropBoxColors[index % cropBoxColors.length];
+
+    return {
+      ratio,
+      label: formatRatio(ratio),
+      left: left + offsetX,
+      top: top + offsetY,
+      width: boxWidth,
+      height: boxHeight,
+      color: colors.border,
+      fill: colors.fill
+    };
+  });
 });
 
 // Handle click on image to set focal point
@@ -169,6 +226,23 @@ onUnmounted(() => {
         :alt="imageName"
         @load="calculateImageBounds"
       />
+
+      <!-- Crop boxes for selected ratios -->
+      <div
+        v-for="(box, index) in cropBoxes"
+        :key="`${box.ratio}-${index}`"
+        class="crop-box"
+        :style="{
+          left: `${box.left}px`,
+          top: `${box.top}px`,
+          width: `${box.width}px`,
+          height: `${box.height}px`,
+          '--box-color': box.color,
+          '--box-fill': box.fill
+        }"
+      >
+        <span class="crop-box__label">{{ box.label }}</span>
+      </div>
       
       <!-- Focal point indicator -->
       <div
@@ -181,9 +255,53 @@ onUnmounted(() => {
         <div class="focal-indicator__label">Focal Point</div>
       </div>
     </div>
-    <p class="focal-hint">
-      Click or drag the focal point to set where the cropped image should focus on.
-    </p>
+    <div class="preview-footer">
+      <p class="focal-hint">
+        Click or drag the focal point to set where the cropped image should focus on.
+      </p>
+      <button
+        type="button"
+        class="crop-toggle"
+        :aria-pressed="showCropBoxes"
+        :title="showCropBoxes ? 'Hide crop boxes' : 'Show crop boxes'"
+        @click="showCropBoxes = !showCropBoxes"
+      >
+        <svg
+          v-if="showCropBoxes"
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <svg
+          v-else
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+          <line x1="3" y1="3" x2="21" y2="21"></line>
+        </svg>
+        <span>{{ showCropBoxes ? 'Hide crop boxes' : 'Show crop boxes' }}</span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -211,6 +329,31 @@ onUnmounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: block;
   user-select: none;
+}
+
+.crop-box {
+  position: absolute;
+  border: 2px dashed var(--box-color);
+  background: var(--box-fill);
+  border-radius: 6px;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.crop-box__label {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--box-color);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  pointer-events: none;
 }
 
 .focal-indicator {
@@ -257,10 +400,37 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
+.preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .focal-hint {
-  text-align: center;
+  flex: 1;
+  text-align: left;
   color: #718096;
   font-size: 0.9rem;
   font-style: italic;
+}
+
+.crop-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: white;
+  color: #2d3748;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.crop-toggle:hover {
+  background: #f7fafc;
 }
 </style>

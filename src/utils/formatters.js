@@ -38,12 +38,12 @@ export function parseCustomRatio(input) {
   if (trimmed.includes(':')) {
     const parts = trimmed.split(':').map(p => parseFloat(p.trim()));
     if (parts.length !== 2 || parts.some(p => isNaN(p) || p <= 0)) {
-      return { error: 'Invalid ratio format. Use W:H (e.g., 5:4)' };
+      return { error: 'Invalid ratio format. Use W:H (2:3)' };
     }
     return { value: parts[0] / parts[1] };
   }
-  
-  return { error: 'Invalid ratio format. Use W:H (e.g., 5:4)' };
+
+  return { error: 'Invalid ratio format. Use W:H (2:3)' };
 }
 
 /**
