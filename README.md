@@ -102,3 +102,9 @@ After building, deploy the `dist/` folder to any static hosting:
 - GitHub Pages
 - AWS S3
 - Any web server
+
+### GitHub Pages (docs folder)
+If you deploy via GitHub Pages with the `/docs` folder setting:
+1. Run `npm run build` to generate `dist/`.
+2. Move or copy the contents of `dist/` into `/docs`.
+3. Commit and push `/docs` so GitHub Pages can publish it.
